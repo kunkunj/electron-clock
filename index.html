@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>备忘录</title>
+    <link rel="stylesheet" href="./css/index.css" />
+  </head>
+  <body>
+    <canvas id="canvas" width="700" height="700"></canvas>
+    <div class="container">
+      <div class="theme">备忘录</div>
+      <div class="btn" onclick="insertState()">新增</div>
+      <div class="body" id="app">
+        <div class="card">
+          <div class="title">名称</div>
+          <div class="time">2023-01-01</div>
+          <div class="content">内容</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function confirm(txt, cb) {
+        let flag = false;
+        let o = document.createElement("div");
+        o.setAttribute(
+          "style",
+          "width:100vw;height:100vh;position: absolute;top:0;left:0;display: flex;justify-content: center;align-items: center;"
+        );
+        let b = document.createElement("div");
+        b.setAttribute(
+          "style",
+          `
+        width: 300px;
+        height: 100px;
+        box-shadow: 0 0 10px 2px #f2f2f2;
+        background: rgb(255, 255, 255);
+        border-radius: 10px;
+        z-index: 9999;`
+        );
+        let c = document.createElement("div");
+        c.setAttribute(
+          "style",
+          `
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          align-items: center;`
+        );
+        c.innerHTML = txt;
+        let d = document.createElement("div");
+        d.setAttribute("style", `display: flex; justify-content: center`);
+        let e = document.createElement("div");
+        e.setAttribute("class", "btn");
+        e.setAttribute(
+          "style",
+          `border: 1px solid #2172bf; background: #fff; color: #2172bf`
+        );
+        e.innerHTML = "取消";
+        let f = document.createElement("div");
+        f.setAttribute("class", "btn");
+        f.innerHTML = "确定";
+        e.onclick = function () {
+          cb(false);
+          document.getElementsByTagName("body")[0].removeChild(o);
+        };
+        f.onclick = function () {
+          cb(true);
+          document.getElementsByTagName("body")[0].removeChild(o);
+        };
+        document.getElementsByTagName("body")[0].appendChild(o);
+        o.appendChild(b);
+        b.appendChild(c);
+        b.appendChild(d);
+        d.appendChild(e);
+        d.appendChild(f);
+      }
+      function compiler(tsx) {
+        let dom = null;
+        dom = document.createElement(tsx["tag"]);
+        for (const key1 in tsx["attrs"]) {
+          if (!["tag", "attrs", "children", "content"].includes(key1)) {
+            dom.setAttribute(key1, tsx["attrs"][key1]);
+          }
+        }
+        if (tsx["content"]) {
+          dom.innerHTML = tsx["content"];
+        }
+        if (tsx["on"]) {
+          tsx["on"]?.map((item) => {
+            dom.addEventListener(item.type, item.fn);
+          });
+        }
+        if (tsx["children"] && tsx["children"].length) {
+          tsx["children"].map((item) => {
+            dom.appendChild(compiler(item));
+          });
+        }
+        return dom;
+      }
+      let isToast = false;
+      function alert(msg, duration) {
+        if (isToast) {
+          return;
+        }
+        isToast = true;
+        duration = isNaN(duration) ? 3000 : duration;
+        var m = document.createElement("div");
+        m.innerHTML = msg;
+        m.style.cssText =
+          "max-width:60%;min-width: 150px;padding:0 14px;height: 40px;color: rgb(255, 255, 255);line-height: 40px;text-align: center;border-radius: 4px;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);z-index: 999999;background: rgba(0, 0, 0,.7);font-size: 16px;";
+        document.body.appendChild(m);
+        setTimeout(function () {
+          var d = 0.5;
+          m.style.webkitTransition =
+            "-webkit-transform " + d + "s ease-in, opacity " + d + "s ease-in";
+          m.style.opacity = "0";
+          setTimeout(function () {
+            isToast = false;
+            document.body.removeChild(m);
+          }, d * 1000);
+        }, duration);
+      }
+    </script>
+    <script src="./js/events.js"></script>
+    <script src="./js/state.js"></script>
+    <script src="./js/storage.js"></script>
+    <script src="./js/clcock.js"></script>
+    <script>
+      Datas.init();
+      function insertState() {
+        if (Datas.getState().list.find((item) => item.isAdd == true)) {
+          alert("您已经有一条新增备忘录信息");
+          return;
+        }
+        Datas.add({ isAdd: true });
+      }
+      setInterval(() => {
+        const option = Datas.getState().list.find((item) => {
+          return Math.abs(new Date(item.time).getTime() - Date.now()) < 500;
+        });
+        if (option && !option.isDelete) {
+          let obj = {
+            title: option.title,
+            body: option.detail,
+          };
+          new window.Notification(obj.title, obj);
+          option.isDelete = true;
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
